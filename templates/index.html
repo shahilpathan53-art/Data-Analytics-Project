@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PredictX — Predict Admission</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+  :root {
+    --neon-purple: #9b59f5;
+    --neon-blue: #4fc3f7;
+    --neon-cyan: #00e5ff;
+    --neon-pink: #e040fb;
+    --bg-dark: #04040f;
+    --glow-purple: 0 0 20px rgba(155,89,245,0.5), 0 0 60px rgba(155,89,245,0.2);
+    --glow-blue: 0 0 20px rgba(79,195,247,0.5), 0 0 60px rgba(79,195,247,0.2);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Rajdhani', sans-serif; background: var(--bg-dark); color: white; min-height: 100vh; overflow-x: hidden; }
+
+  .bg-canvas { position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 20% 80%, rgba(155,89,245,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(79,195,247,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(224,64,251,0.06) 0%, transparent 70%), #04040f; }
+  .bg-grid { position: fixed; inset: 0; z-index: 0;
+    background-image: linear-gradient(rgba(155,89,245,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(155,89,245,0.07) 1px, transparent 1px);
+    background-size: 60px 60px; animation: gridMove 20s linear infinite; }
+  @keyframes gridMove { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; pointer-events: none; animation: orbFloat 8s ease-in-out infinite; }
+  .orb-1 { width:400px; height:400px; background:rgba(155,89,245,0.15); top:-100px; left:-100px; }
+  .orb-2 { width:300px; height:300px; background:rgba(79,195,247,0.12); bottom:100px; right:-80px; animation-delay:-3s; }
+  .orb-3 { width:200px; height:200px; background:rgba(224,64,251,0.1); top:50%; left:50%; animation-delay:-6s; }
+  @keyframes orbFloat { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(30px,-40px) scale(1.05); } 66% { transform:translate(-20px,20px) scale(0.95); } }
+
+  /* NAVBAR */
+  .navbar { position: fixed; top:0; left:0; right:0; z-index:100;
+    display: flex; align-items:center; justify-content:space-between;
+    padding: 0 50px; height: 70px; background: rgba(10,5,30,0.55);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(155,89,245,0.3);
+    box-shadow: 0 4px 30px rgba(155,89,245,0.15), inset 0 1px 0 rgba(255,255,255,0.06); }
+  .nav-links { display:flex; gap:8px; align-items:center; }
+  .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size:14px; font-weight:600;
+    letter-spacing:1.5px; text-transform:uppercase; padding: 8px 18px; border-radius:8px;
+    border: 1px solid transparent; transition: all 0.3s ease; }
+  .nav-links a:hover { color: white; background:rgba(155,89,245,0.15); border-color:rgba(155,89,245,0.4); box-shadow:0 0 15px rgba(155,89,245,0.3); text-shadow:0 0 8px rgba(155,89,245,0.8); }
+  .nav-links a.active { color: white; background:rgba(155,89,245,0.2); border-color:rgba(155,89,245,0.5); box-shadow: var(--glow-purple); text-shadow:0 0 10px var(--neon-purple); }
+
+  /* MAIN */
+  .main { position: relative; z-index:10; padding-top: 70px; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding-bottom: 60px; }
+  .wrapper { width: 100%; max-width: 1300px; display: flex; gap: 60px; padding: 60px 40px 40px; align-items: flex-start; animation: fadeUp 0.8s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+
+  /* LEFT PANEL */
+  .left-panel { flex: 0 0 340px; padding-top: 20px; }
+  .page-tag { display: inline-block; font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing:4px; color: var(--neon-purple); border: 1px solid rgba(155,89,245,0.4); padding: 5px 16px; border-radius:20px; background: rgba(155,89,245,0.08); margin-bottom: 24px; }
+  .left-panel h1 { font-family: 'Orbitron', monospace; font-size: clamp(26px, 3vw, 40px); font-weight: 900; line-height: 1.2; margin-bottom: 18px; }
+  .left-panel h1 span { background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 0 15px rgba(155,89,245,0.6)); }
+  .left-panel p { font-size: 15px; color: rgba(255,255,255,0.45); line-height: 1.8; margin-bottom: 36px; letter-spacing: 0.3px; }
+
+  .info-cards { display:flex; flex-direction:column; gap:14px; margin-bottom:36px; }
+  .info-card { display: flex; align-items:center; gap:14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(155,89,245,0.15); border-radius: 12px; padding: 14px 18px; transition: all 0.3s; }
+  .info-card:hover { border-color: rgba(155,89,245,0.35); background: rgba(155,89,245,0.07); }
+  .info-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .ic-purple { background:rgba(155,89,245,0.15); border:1px solid rgba(155,89,245,0.3); }
+  .ic-blue   { background:rgba(79,195,247,0.1);  border:1px solid rgba(79,195,247,0.3); }
+  .ic-cyan   { background:rgba(0,229,255,0.08);  border:1px solid rgba(0,229,255,0.25); }
+  .info-card-text strong { display:block; font-size:14px; font-weight:600; margin-bottom:2px; color:white; }
+  .info-card-text span { color:rgba(255,255,255,0.4); font-size:12px; letter-spacing:0.5px; }
+
+  .chart-btn { display: inline-flex; align-items:center; gap:8px; padding: 13px 28px; border-radius:10px; border: 1px solid rgba(79,195,247,0.4); background: rgba(79,195,247,0.08); color: var(--neon-blue); font-family: 'Orbitron', monospace; font-size:11px; font-weight:600; letter-spacing:2px; cursor:pointer; text-decoration:none; transition:all 0.3s; }
+  .chart-btn:hover { background:rgba(79,195,247,0.18); box-shadow: var(--glow-blue); transform: translateY(-2px); }
+
+  /* FORM CARD */
+  .form-card { flex: 1; background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(155,89,245,0.2); border-radius: 24px; padding: 44px 40px; position: relative; overflow:hidden; }
+  .form-card::before { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background: linear-gradient(90deg, transparent, rgba(155,89,245,0.7), rgba(79,195,247,0.5), transparent); box-shadow: 0 0 12px rgba(155,89,245,0.4); }
+  .form-header { display:flex; align-items:center; gap:14px; margin-bottom: 34px; padding-bottom: 24px; border-bottom: 1px solid rgba(155,89,245,0.12); }
+  .form-header-icon { width:46px; height:46px; border-radius:12px; background:rgba(155,89,245,0.15); border:1px solid rgba(155,89,245,0.35); display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow: 0 0 15px rgba(155,89,245,0.25); }
+  .form-header-text h2 { font-family:'Orbitron', monospace; font-size:17px; font-weight:700; letter-spacing:1px; margin-bottom:3px; }
+  .form-header-text p { font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.5px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .full { grid-column: 1 / 3; }
+  .field { display:flex; flex-direction:column; gap:8px; }
+  .field label { font-family: 'Orbitron', monospace; font-size: 10px; font-weight:600; letter-spacing: 2px; text-transform:uppercase; color: rgba(255,255,255,0.45); display:flex; align-items:center; gap:6px; }
+  .field label i { font-size:11px; color:var(--neon-purple); opacity:0.8; }
+  .input-wrap { position:relative; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(155,89,245,0.18); transition: all 0.3s; }
+  .input-wrap:focus-within { border-color: rgba(155,89,245,0.6); box-shadow: 0 0 0 3px rgba(155,89,245,0.1), 0 0 20px rgba(155,89,245,0.15); background: rgba(155,89,245,0.04); }
+  .input-wrap input, .input-wrap select { width:100%; padding:14px 16px; background:transparent; border:none; outline:none; color:white; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600; letter-spacing:0.5px; border-radius:12px; }
+  .input-wrap select option { background:#0d0920; color:white; }
+  .hint-tag { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; color:rgba(155,89,245,0.5); pointer-events:none; }
+  .range-bar { height:2px; border-radius:2px; background:rgba(155,89,245,0.12); margin-top:4px; overflow:hidden; }
+  .range-fill { height:100%; background:linear-gradient(90deg, var(--neon-purple), var(--neon-blue)); border-radius:2px; width:0%; transition: width 0.4s ease; }
+
+  .submit-btn { margin-top:28px; width:100%; padding: 18px; border:none; border-radius:14px; background: linear-gradient(135deg, #7b2ff7, #4b0aab); color:white; font-family:'Orbitron',monospace; font-size:13px; font-weight:700; letter-spacing:3px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden; box-shadow: 0 0 30px rgba(155,89,245,0.4); }
+  .submit-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg, rgba(155,89,245,0.3), rgba(79,195,247,0.2)); opacity:0; transition:opacity 0.3s; }
+  .submit-btn:hover { transform:translateY(-3px); box-shadow:0 0 50px rgba(155,89,245,0.6), 0 12px 30px rgba(155,89,245,0.3); }
+  .submit-btn:hover::before { opacity:1; }
+  .submit-btn span { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:10px; }
+
+  /* ── RESULT BOX ── */
+  .result { margin-top:24px; padding: 28px 30px; border-radius:16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(155,89,245,0.35); position:relative; overflow:hidden; animation: resultIn 0.5s ease both; }
+  @keyframes resultIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+  .result::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background: linear-gradient(90deg, transparent, var(--neon-purple), var(--neon-blue), transparent); }
+  .result-inner { display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+  .result-circle { width:90px; height:90px; border-radius:50%; flex-shrink:0; border:2px solid rgba(155,89,245,0.5); background:rgba(155,89,245,0.08); display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow: 0 0 25px rgba(155,89,245,0.25); }
+  .result-pct { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; background:linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; }
+  .result-pct-label { font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:1px; margin-top:3px; }
+  .result-info { flex:1; }
+
+  /* 3 result tag styles */
+  .result-tag { display:inline-block; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; padding:4px 12px; border-radius:4px; margin-bottom:8px; text-transform:uppercase; }
+  .tag-admit    { background:rgba(0,229,129,0.12);  color:#00e581; border:1px solid rgba(0,229,129,0.3); }
+  .tag-moderate { background:rgba(255,180,0,0.12);  color:#ffb400; border:1px solid rgba(255,180,0,0.35); }
+  .tag-reject   { background:rgba(255,65,65,0.12);  color:#ff4141; border:1px solid rgba(255,65,65,0.3); }
+
+  .result-status { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; margin-bottom:4px; letter-spacing:1px; }
+  .result-sub { font-size:13px; color:rgba(255,255,255,0.4); }
+  .result-bar { margin-top:16px; height:4px; border-radius:4px; background:rgba(255,255,255,0.06); overflow:hidden; }
+  .result-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg, var(--neon-purple), var(--neon-cyan)); box-shadow:0 0 8px rgba(155,89,245,0.5); transition:width 1s ease; width:0; }
+
+  @media (max-width:1000px) { .wrapper { flex-direction:column; gap:30px; padding:90px 20px 40px; } .left-panel { flex:none; width:100%; padding-top:0; } }
+  @media (max-width:640px) { .navbar { padding:0 20px; } .nav-links { display:none; } .form-grid { grid-template-columns:1fr; } .full { grid-column:1; } .form-card { padding:28px 20px; } }
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<nav class="navbar">
+  <a href="/" style="text-decoration:none;display:flex;align-items:center;">
+    <svg width="160" height="38" viewBox="0 0 160 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9b59f5"/><stop offset="100%" stop-color="#4fc3f7"/></linearGradient>
+        <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#9b59f5"/><stop offset="60%" stop-color="#4fc3f7"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="url(#hexGrad)" opacity="0.15" filter="url(#glow)"/>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="none" stroke="url(#hexGrad)" stroke-width="1.5"/>
+      <polygon points="19,10 26,19 19,28 12,19" fill="url(#hexGrad)" opacity="0.5"/>
+      <circle cx="19" cy="19" r="3" fill="white" opacity="0.9"/>
+      <line x1="19" y1="3" x2="19" y2="7" stroke="#9b59f5" stroke-width="1.2" opacity="0.8"/>
+      <line x1="33" y1="11" x2="29.5" y2="13" stroke="#4fc3f7" stroke-width="1.2" opacity="0.8"/>
+      <line x1="33" y1="27" x2="29.5" y2="25" stroke="#4fc3f7" stroke-width="1.2" opacity="0.8"/>
+      <text x="42" y="16" font-family="'Orbitron', monospace" font-size="13" font-weight="900" fill="url(#textGrad)" letter-spacing="2" filter="url(#glow)">PREDICT</text>
+      <text x="44" y="31" font-family="'Orbitron', monospace" font-size="9" font-weight="400" fill="#4fc3f7" letter-spacing="6" opacity="0.8">· X ·</text>
+      <line x1="42" y1="19" x2="152" y2="19" stroke="url(#textGrad)" stroke-width="0.5" opacity="0.4"/>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/predict_page" class="active">Predict</a>
+    <a href="/charts">Charts</a>
+    <a href="/dataset">Dataset</a>
+    <a href="/model">Model</a>
+    <a href="/about">About</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="wrapper">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="page-tag">⬡ AI PREDICTION ENGINE</div>
+      <h1>Predict Your<br><span>Admission Chances</span></h1>
+      <p>Fill in your academic profile and our ML model will calculate your graduate admission probability instantly.</p>
+      <div class="info-cards">
+        <div class="info-card">
+          <div class="info-icon ic-purple">🧠</div>
+          <div class="info-card-text"><strong>ML Powered</strong><span>Linear Regression model</span></div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon ic-blue">📊</div>
+          <div class="info-card-text"><strong>96% Accuracy</strong><span>Trained on 500 samples</span></div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon ic-cyan">⚡</div>
+          <div class="info-card-text"><strong>Instant Results</strong><span>Real-time prediction output</span></div>
+        </div>
+      </div>
+      <a href="/charts" class="chart-btn"><i class="fa-solid fa-chart-line"></i> VIEW DATASET INSIGHTS</a>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-icon">🔮</div>
+        <div class="form-header-text">
+          <h2>Academic Profile</h2>
+          <p>Enter all fields for accurate prediction</p>
+        </div>
+      </div>
+
+      <form action="/predict" method="POST">
+        <div class="form-grid">
+
+          <div class="field">
+            <label><i class="fa-solid fa-graduation-cap"></i> GRE Score</label>
+            <div class="input-wrap">
+              <input type="number" name="gre" placeholder="290 – 340" min="260" max="340" required oninput="updateBar(this,'gre-bar',260,340)"/>
+              <span class="hint-tag">/340</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="gre-bar"></div></div>
+          </div>
+
+          <div class="field">
+            <label><i class="fa-solid fa-language"></i> TOEFL Score</label>
+            <div class="input-wrap">
+              <input type="number" name="toefl" placeholder="92 – 120" min="0" max="120" required oninput="updateBar(this,'toefl-bar',0,120)"/>
+              <span class="hint-tag">/120</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="toefl-bar"></div></div>
+          </div>
+
+          <div class="field">
+            <label><i class="fa-solid fa-university"></i> University Rating</label>
+            <div class="input-wrap">
+              <input type="number" name="rating" placeholder="1 – 5" min="1" max="5" required oninput="updateBar(this,'rating-bar',1,5)"/>
+              <span class="hint-tag">/5</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="rating-bar"></div></div>
+          </div>
+
+          <div class="field">
+            <label><i class="fa-solid fa-file-pen"></i> SOP Strength</label>
+            <div class="input-wrap">
+              <input type="number" name="sop" placeholder="1.0 – 5.0" step="0.5" min="1" max="5" required oninput="updateBar(this,'sop-bar',1,5)"/>
+              <span class="hint-tag">/5.0</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="sop-bar"></div></div>
+          </div>
+
+          <div class="field">
+            <label><i class="fa-solid fa-envelope-open-text"></i> LOR Strength</label>
+            <div class="input-wrap">
+              <input type="number" name="lor" placeholder="1.0 – 5.0" step="0.5" min="1" max="5" required oninput="updateBar(this,'lor-bar',1,5)"/>
+              <span class="hint-tag">/5.0</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="lor-bar"></div></div>
+          </div>
+
+          <div class="field">
+            <label><i class="fa-solid fa-star"></i> CGPA</label>
+            <div class="input-wrap">
+              <input type="number" name="cgpa" placeholder="6.0 – 10.0" step="0.01" min="0" max="10" required oninput="updateBar(this,'cgpa-bar',0,10)"/>
+              <span class="hint-tag">/10</span>
+            </div>
+            <div class="range-bar"><div class="range-fill" id="cgpa-bar"></div></div>
+          </div>
+
+          <div class="field full">
+            <label><i class="fa-solid fa-flask"></i> Research Experience</label>
+            <div class="input-wrap">
+              <select name="research">
+                <option value="0">No — I have no research experience</option>
+                <option value="1">Yes — I have research experience</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <button type="submit" class="submit-btn">
+          <span><i class="fa-solid fa-brain"></i> PREDICT MY ADMISSION</span>
+        </button>
+      </form>
+
+      <!-- RESULT — 3 CONDITIONS -->
+      {% if prediction %}
+      <div class="result">
+        <div class="result-inner">
+          <div class="result-circle">
+            <div class="result-pct">{{ prediction }}%</div>
+            <div class="result-pct-label">CHANCE</div>
+          </div>
+          <div class="result-info">
+
+            {% if prediction|int >= 80 %}
+              <div class="result-tag tag-admit">✓ HIGH CHANCE</div>
+            {% elif prediction|int >= 50 %}
+              <div class="result-tag tag-moderate">⚖ MODERATE CHANCE</div>
+            {% else %}
+              <div class="result-tag tag-reject">✗ LOW CHANCE</div>
+            {% endif %}
+
+            <div class="result-status">{{ status }}</div>
+            <div class="result-sub">Based on your academic profile analysis</div>
+            <div class="result-bar">
+              <div class="result-bar-fill" id="result-fill" data-pct="{{ prediction }}"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+function updateBar(input, barId, min, max) {
+  const bar = document.getElementById(barId);
+  if (!bar) return;
+  const val = parseFloat(input.value);
+  if (isNaN(val)) { bar.style.width = '0%'; return; }
+  bar.style.width = Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100)) + '%';
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  const fill = document.getElementById('result-fill');
+  if (fill) {
+    const pct = parseFloat(fill.getAttribute('data-pct'));
+    if (!isNaN(pct)) setTimeout(() => { fill.style.width = Math.min(100, Math.max(0, pct)) + '%'; }, 100);
+  }
+});
+</script>
+
+</body>
+</html>

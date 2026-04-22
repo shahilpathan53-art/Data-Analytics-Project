@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PredictX — Chart</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --neon-purple:#9b59f5;
+    --neon-blue:#4fc3f7;
+    --neon-cyan:#00e5ff;
+    --bg-dark:#04040f;
+    --glow-purple:0 0 20px rgba(155,89,245,0.5),0 0 60px rgba(155,89,245,0.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Rajdhani',sans-serif;background:var(--bg-dark);color:white;min-height:100vh;overflow-x:hidden;}
+
+  /* BACKGROUND */
+  .bg-canvas{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(155,89,245,0.18) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 20%,rgba(79,195,247,0.12) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(224,64,251,0.06) 0%,transparent 70%),#04040f;}
+  .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(155,89,245,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(155,89,245,0.07) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite;}
+  @keyframes gridMove{0%{background-position:0 0;}100%{background-position:60px 60px;}}
+  .orb{position:fixed;border-radius:50%;filter:blur(80px);z-index:0;pointer-events:none;animation:orbFloat 8s ease-in-out infinite;}
+  .orb-1{width:400px;height:400px;background:rgba(155,89,245,0.15);top:-100px;left:-100px;animation-delay:0s;}
+  .orb-2{width:300px;height:300px;background:rgba(79,195,247,0.12);bottom:100px;right:-80px;animation-delay:-3s;}
+  .orb-3{width:200px;height:200px;background:rgba(224,64,251,0.1);top:50%;left:50%;animation-delay:-6s;}
+  @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(30px,-40px) scale(1.05);}66%{transform:translate(-20px,20px) scale(0.95);}}
+
+  /* NAVBAR */
+  .navbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 50px;height:70px;background:rgba(10,5,30,0.55);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid rgba(155,89,245,0.3);box-shadow:0 4px 30px rgba(155,89,245,0.15),inset 0 1px 0 rgba(255,255,255,0.06);}
+  .nav-links{display:flex;gap:8px;align-items:center;}
+  .nav-links a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:8px 18px;border-radius:8px;border:1px solid transparent;transition:all 0.3s ease;}
+  .nav-links a:hover{color:white;background:rgba(155,89,245,0.15);border-color:rgba(155,89,245,0.4);box-shadow:0 0 15px rgba(155,89,245,0.3);text-shadow:0 0 8px rgba(155,89,245,0.8);}
+  .nav-links a.active{color:white;background:rgba(155,89,245,0.2);border-color:rgba(155,89,245,0.5);box-shadow:var(--glow-purple);text-shadow:0 0 10px var(--neon-purple);}
+
+  /* MAIN */
+  .main{position:relative;z-index:10;padding-top:70px;min-height:100vh;}
+
+  /* WRAPPER */
+  .wrapper{max-width:920px;margin:0 auto;padding:50px 40px 60px;animation:fadeUp 0.8s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+
+  /* PAGE TAG */
+  .page-tag{display:inline-block;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:4px;color:var(--neon-purple);border:1px solid rgba(155,89,245,0.4);padding:5px 16px;border-radius:20px;background:rgba(155,89,245,0.08);margin-bottom:14px;}
+
+  /* HEADING */
+  h1{font-family:'Orbitron',monospace;font-size:clamp(22px,3vw,34px);font-weight:900;line-height:1.2;margin-bottom:28px;}
+  h1 span{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue),var(--neon-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 12px rgba(155,89,245,0.5));}
+
+  /* GLASS CARD */
+  .card{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(155,89,245,0.2);border-radius:22px;padding:26px;margin-bottom:22px;position:relative;overflow:hidden;transition:border-color 0.3s;}
+  .card::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(155,89,245,0.7),rgba(79,195,247,0.5),transparent);box-shadow:0 0 10px rgba(155,89,245,0.3);}
+  .card:hover{border-color:rgba(155,89,245,0.4);}
+  .card img{width:100%;display:block;border-radius:14px;border:1px solid rgba(155,89,245,0.1);cursor:zoom-in;transition:transform 0.4s;}
+  .card img:hover{transform:scale(1.01);}
+
+  /* SUMMARY */
+  .summary{background:rgba(255,255,255,0.02);border:1px solid rgba(155,89,245,0.15);border-left:2px solid var(--neon-purple);border-radius:0 16px 16px 0;padding:22px 26px;margin-bottom:24px;}
+  .summary-label{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--neon-purple);text-transform:uppercase;margin-bottom:10px;}
+  .summary p{font-size:15px;color:rgba(255,255,255,0.5);line-height:1.85;}
+  .summary strong{color:rgba(255,255,255,0.85);}
+
+  /* BACK BUTTON */
+  .back-btn{display:inline-flex;align-items:center;gap:8px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);text-decoration:none;border:1px solid rgba(155,89,245,0.3);padding:11px 22px;border-radius:10px;background:rgba(155,89,245,0.07);transition:all 0.3s;}
+  .back-btn:hover{color:white;background:rgba(155,89,245,0.18);border-color:rgba(155,89,245,0.6);box-shadow:var(--glow-purple);transform:translateY(-2px);}
+
+  /* LIGHTBOX */
+  #lb{position:fixed;inset:0;z-index:999;background:rgba(4,4,15,0.95);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+  #lb.open{opacity:1;pointer-events:all;}
+  #lb img{max-width:90vw;max-height:85vh;border-radius:16px;border:1px solid rgba(155,89,245,0.35);box-shadow:0 0 60px rgba(155,89,245,0.25);}
+  #lb-close{position:absolute;top:22px;right:28px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.4);cursor:pointer;border:1px solid rgba(255,255,255,0.12);padding:8px 16px;border-radius:8px;transition:all 0.3s;}
+  #lb-close:hover{color:white;border-color:rgba(155,89,245,0.5);}
+
+  /* FOOTER */
+  footer{text-align:center;padding:26px;border-top:1px solid rgba(155,89,245,0.1);color:rgba(255,255,255,0.2);font-size:11px;letter-spacing:2px;font-family:'Orbitron',monospace;position:relative;z-index:10;}
+
+  @media(max-width:768px){.navbar{padding:0 20px;}.nav-links{display:none;}.wrapper{padding:30px 18px 50px;}}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" style="text-decoration:none;display:flex;align-items:center;">
+    <svg width="160" height="38" viewBox="0 0 160 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#9b59f5"/>
+          <stop offset="100%" stop-color="#4fc3f7"/>
+        </linearGradient>
+        <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#9b59f5"/>
+          <stop offset="60%" stop-color="#4fc3f7"/>
+          <stop offset="100%" stop-color="#00e5ff"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="url(#hexGrad)" opacity="0.15" filter="url(#glow)"/>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="none" stroke="url(#hexGrad)" stroke-width="1.5"/>
+      <polygon points="19,10 26,19 19,28 12,19" fill="url(#hexGrad)" opacity="0.5"/>
+      <circle cx="19" cy="19" r="3" fill="white" opacity="0.9"/>
+      <line x1="19" y1="3" x2="19" y2="7" stroke="#9b59f5" stroke-width="1.2" opacity="0.8"/>
+      <line x1="33" y1="11" x2="29.5" y2="13" stroke="#4fc3f7" stroke-width="1.2" opacity="0.8"/>
+      <line x1="33" y1="27" x2="29.5" y2="25" stroke="#4fc3f7" stroke-width="1.2" opacity="0.8"/>
+      <text x="42" y="16" font-family="'Orbitron', monospace" font-size="13" font-weight="900" fill="url(#textGrad)" letter-spacing="2" filter="url(#glow)">PREDICT</text>
+      <text x="44" y="31" font-family="'Orbitron', monospace" font-size="9" font-weight="400" fill="#4fc3f7" letter-spacing="6" opacity="0.8">· X ·</text>
+      <line x1="42" y1="19" x2="152" y2="19" stroke="url(#textGrad)" stroke-width="0.5" opacity="0.4"/>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/predict_page">Predict</a>
+    <a href="/charts" class="active">Charts</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="wrapper">
+
+    <div class="page-tag">⬡ Data Visualization</div>
+    <h1>CGPA vs <span>University Rating</span></h1>
+
+    <div class="card">
+      <img src="{{ url_for('static', filename='cgpa_university_rating_bar.png') }}"
+           alt="CGPA vs University Rating"
+           onclick="document.getElementById('lb').classList.add('open')"/>
+    </div>
+
+    <div class="summary">
+      <div class="summary-label">💡 Analysis Summary</div>
+      <p>
+        This bar chart shows the <strong>average CGPA</strong> for students from different university ratings.
+        <strong>Higher university ratings</strong> tend to have students with better academic performance.
+        This suggests that CGPA plays a significant role in the admission process.
+      </p>
+    </div>
+
+    <a href="/charts" class="back-btn">← Back to Charts</a>
+
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lb" onclick="this.classList.remove('open')">
+  <div id="lb-close" onclick="event.stopPropagation();document.getElementById('lb').classList.remove('open')">✕ CLOSE</div>
+  <img src="{{ url_for('static', filename='cgpa_university_rating_bar.png') }}" alt="Chart" onclick="event.stopPropagation()"/>
+</div>
+
+<footer>⬡ PREDICTX &nbsp;·&nbsp; ANALYTICS DASHBOARD &nbsp;·&nbsp; BUILT WITH FLASK</footer>
+
+<script>
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('lb').classList.remove('open');});
+</script>
+
+</body>
+</html>

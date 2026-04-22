@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PredictX — Model Insights</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rajdhani',sans-serif;background:#04040f;color:#fff;min-height:100vh}
+
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(155,89,245,.18) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 50% at 80% 20%,rgba(79,195,247,.12) 0%,transparent 60%),#04040f}
+body::after{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(155,89,245,.07) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(155,89,245,.07) 1px,transparent 1px);
+  background-size:60px 60px;animation:grid 20s linear infinite}
+@keyframes grid{to{background-position:60px 60px}}
+
+/* NAVBAR */
+nav{position:sticky;top:0;z-index:999;height:70px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 50px;background:rgba(10,5,30,.9);
+  backdrop-filter:blur(20px);border-bottom:1px solid rgba(155,89,245,.4)}
+nav a{text-decoration:none}
+.links{display:flex;gap:8px}
+.links a{color:rgba(255,255,255,.6);font-family:'Orbitron',monospace;font-size:11px;
+  letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:8px;
+  border:1px solid transparent;transition:all .3s}
+.links a:hover{color:#fff;background:rgba(155,89,245,.15);border-color:rgba(155,89,245,.4)}
+.links a.on{color:#fff;background:rgba(155,89,245,.2);border-color:rgba(155,89,245,.5);
+  box-shadow:0 0 20px rgba(155,89,245,.4)}
+
+main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:50px 30px 60px;
+  animation:up .8s ease both}
+@keyframes up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.tag{display:inline-block;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:4px;
+  color:#9b59f5;border:1px solid rgba(155,89,245,.4);padding:5px 16px;border-radius:20px;
+  background:rgba(155,89,245,.08);margin-bottom:14px}
+h1{font-family:'Orbitron',monospace;font-size:clamp(22px,3vw,32px);font-weight:900;margin-bottom:8px}
+h1 span{background:linear-gradient(135deg,#9b59f5,#4fc3f7,#00e5ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:14px;color:rgba(255,255,255,.4);margin-bottom:30px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:rgba(255,255,255,.03);border:1px solid rgba(155,89,245,.18);
+  border-radius:14px;padding:20px;text-align:center;transition:all .3s}
+.stat:hover{border-color:rgba(155,89,245,.4);background:rgba(155,89,245,.07)}
+.sv{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;
+  background:linear-gradient(135deg,#9b59f5,#4fc3f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sl{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+
+/* CARD */
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(155,89,245,.2);
+  border-radius:20px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(155,89,245,.6),rgba(79,195,247,.4),transparent)}
+.ctitle{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;
+  color:#9b59f5;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+/* FEATURE IMPORTANCE BARS */
+.feat{margin-bottom:14px}
+.feat-top{display:flex;justify-content:space-between;margin-bottom:6px}
+.fname{font-size:14px;font-weight:600;color:rgba(255,255,255,.75)}
+.fval{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;
+  background:linear-gradient(135deg,#9b59f5,#4fc3f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.bar-bg{height:6px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#9b59f5,#4fc3f7);
+  box-shadow:0 0 8px rgba(155,89,245,.4);
+  width:0;transition:width 1.2s ease}
+
+/* INFO GRID */
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.iitem{background:rgba(255,255,255,.02);border:1px solid rgba(155,89,245,.12);
+  border-radius:12px;padding:16px 18px;transition:all .3s}
+.iitem:hover{border-color:rgba(155,89,245,.3);background:rgba(155,89,245,.05)}
+.ilabel{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;
+  color:rgba(155,89,245,.7);text-transform:uppercase;margin-bottom:6px}
+.ival{font-size:15px;color:rgba(255,255,255,.8);font-weight:600}
+
+/* PIPELINE */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:4px}
+.step{background:rgba(155,89,245,.1);border:1px solid rgba(155,89,245,.25);
+  border-radius:8px;padding:8px 14px;font-family:'Orbitron',monospace;
+  font-size:9px;letter-spacing:1.5px;color:rgba(255,255,255,.7)}
+.arr{color:rgba(155,89,245,.5);font-size:14px}
+
+/* COEF TABLE */
+table{width:100%;border-collapse:collapse;margin-top:4px}
+thead th{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;
+  color:rgba(155,89,245,.8);text-transform:uppercase;padding:10px 12px;
+  text-align:left;border-bottom:1px solid rgba(155,89,245,.15)}
+tbody tr{border-bottom:1px solid rgba(155,89,245,.06);transition:background .2s}
+tbody tr:hover{background:rgba(155,89,245,.05)}
+tbody td{padding:10px 12px;font-size:14px;color:rgba(255,255,255,.6)}
+.pos{color:#00e581}.neg{color:#ff6b6b}
+.mono{font-family:'Orbitron',monospace;font-size:11px}
+
+.back{display:inline-flex;align-items:center;gap:8px;font-family:'Orbitron',monospace;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);
+  text-decoration:none;border:1px solid rgba(155,89,245,.3);padding:11px 22px;
+  border-radius:10px;background:rgba(155,89,245,.07);transition:all .3s;margin-top:8px}
+.back:hover{color:#fff;background:rgba(155,89,245,.18);border-color:rgba(155,89,245,.6);
+  box-shadow:0 0 20px rgba(155,89,245,.3);transform:translateY(-2px)}
+
+footer{text-align:center;padding:26px;border-top:1px solid rgba(155,89,245,.1);
+  color:rgba(255,255,255,.2);font-size:11px;letter-spacing:2px;
+  font-family:'Orbitron',monospace;position:relative;z-index:1}
+
+@media(max-width:768px){
+  nav{padding:0 20px}.links{display:none}
+  main{padding:30px 16px 50px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .igrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/">
+    <svg width="150" height="36" viewBox="0 0 160 38" fill="none">
+      <defs>
+        <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9b59f5"/><stop offset="100%" stop-color="#4fc3f7"/></linearGradient>
+        <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#9b59f5"/><stop offset="60%" stop-color="#4fc3f7"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient>
+      </defs>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="url(#hg)" opacity=".15"/>
+      <polygon points="19,3 33,11 33,27 19,35 5,27 5,11" fill="none" stroke="url(#hg)" stroke-width="1.5"/>
+      <polygon points="19,10 26,19 19,28 12,19" fill="url(#hg)" opacity=".5"/>
+      <circle cx="19" cy="19" r="3" fill="white" opacity=".9"/>
+      <text x="42" y="16" font-family="Orbitron,monospace" font-size="13" font-weight="900" fill="url(#tg)" letter-spacing="2">PREDICT</text>
+      <text x="44" y="31" font-family="Orbitron,monospace" font-size="9" fill="#4fc3f7" letter-spacing="6" opacity=".8">· X ·</text>
+      <line x1="42" y1="19" x2="152" y2="19" stroke="url(#tg)" stroke-width=".5" opacity=".4"/>
+    </svg>
+  </a>
+  <div class="links">
+    <a href="/">Home</a>
+    <a href="/predict_page">Predict</a>
+    <a href="/charts">Charts</a>
+    <a href="/dataset">Dataset</a>
+    <a href="/model" class="on">Model</a>
+    <a href="/about">About</a>
+  </div>
+</nav>
+
+<main>
+
+  <div class="tag">⬡ ML Model</div>
+  <h1>Model <span>Insights</span></h1>
+  <p class="sub">Linear Regression · Admission Predict Ver1.1 · 500 records · 7 features</p>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="sv">81.88%</div>
+      <div class="sl">R² Score</div>
+    </div>
+    <div class="stat">
+      <div class="sv">0.0427</div>
+      <div class="sl">MAE</div>
+    </div>
+    <div class="stat">
+      <div class="sv">0.0609</div>
+      <div class="sl">RMSE</div>
+    </div>
+    <div class="stat">
+      <div class="sv">400 / 100</div>
+      <div class="sl">Train / Test</div>
+    </div>
+  </div>
+
+  <!-- FEATURE IMPORTANCE -->
+  <div class="card">
+    <div class="ctitle">📊 Feature Importance</div>
+
+    <div class="feat">
+      <div class="feat-top"><span class="fname">CGPA</span><span class="fval">68.8%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="68.8"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">Research Experience</span><span class="fval">14.7%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="14.7"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">LOR Strength</span><span class="fval">10.5%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="10.5"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">University Rating</span><span class="fval">1.6%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="1.6"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">TOEFL Score</span><span class="fval">1.8%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="1.8"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">GRE Score</span><span class="fval">1.5%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="1.5"></div></div>
+    </div>
+    <div class="feat">
+      <div class="feat-top"><span class="fname">SOP Strength</span><span class="fval">1.1%</span></div>
+      <div class="bar-bg"><div class="bar-fill" data-w="1.1"></div></div>
+    </div>
+  </div>
+
+  <!-- MODEL INFO -->
+  <div class="card">
+    <div class="ctitle">⚙️ Model Information</div>
+    <div class="igrid">
+      <div class="iitem"><div class="ilabel">Algorithm</div><div class="ival">Linear Regression</div></div>
+      <div class="iitem"><div class="ilabel">Library</div><div class="ival">Scikit-Learn</div></div>
+      <div class="iitem"><div class="ilabel">Train Size</div><div class="ival">400 records (80%)</div></div>
+      <div class="iitem"><div class="ilabel">Test Size</div><div class="ival">100 records (20%)</div></div>
+      <div class="iitem"><div class="ilabel">Random State</div><div class="ival">42</div></div>
+      <div class="iitem"><div class="ilabel">Intercept</div><div class="ival">-1.4214</div></div>
+      <div class="iitem"><div class="ilabel">Output Range</div><div class="ival">0.34 – 0.97</div></div>
+      <div class="iitem"><div class="ilabel">Saved As</div><div class="ival">admission_model.pkl</div></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="card">
+    <div class="ctitle">🔁 Training Pipeline</div>
+    <div class="pipeline">
+      <div class="step">Load CSV</div><span class="arr">→</span>
+      <div class="step">Clean Data</div><span class="arr">→</span>
+      <div class="step">Select Features</div><span class="arr">→</span>
+      <div class="step">Train / Test Split</div><span class="arr">→</span>
+      <div class="step">Fit Model</div><span class="arr">→</span>
+      <div class="step">Evaluate</div><span class="arr">→</span>
+      <div class="step">Save .pkl</div>
+    </div>
+  </div>
+
+  <!-- COEFFICIENTS -->
+  <div class="card">
+    <div class="ctitle">📐 Model Coefficients</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Coefficient</th>
+          <th>Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>CGPA</td><td class="mono pos">+0.11253</td><td>Strongest positive impact</td></tr>
+        <tr><td>Research</td><td class="mono pos">+0.02403</td><td>Boosts chance significantly</td></tr>
+        <tr><td>LOR</td><td class="mono pos">+0.01724</td><td>Strong recommendation effect</td></tr>
+        <tr><td>TOEFL Score</td><td class="mono pos">+0.00300</td><td>Moderate positive impact</td></tr>
+        <tr><td>University Rating</td><td class="mono pos">+0.00257</td><td>Slight positive impact</td></tr>
+        <tr><td>GRE Score</td><td class="mono pos">+0.00243</td><td>Slight positive impact</td></tr>
+        <tr><td>SOP</td><td class="mono pos">+0.00181</td><td>Least impact among features</td></tr>
+        <tr><td>Intercept</td><td class="mono neg">-1.4214</td><td>Baseline offset</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <a href="/" class="back">← Back to Home</a>
+
+</main>
+
+<footer>⬡ PREDICTX &nbsp;·&nbsp; MODEL INSIGHTS &nbsp;·&nbsp; LINEAR REGRESSION</footer>
+
+<script>
+// Animate bars on load
+window.addEventListener('load', () => {
+  document.querySelectorAll('.bar-fill').forEach(bar => {
+    bar.style.width = bar.getAttribute('data-w') + '%';
+  });
+});
+</script>
+
+</body>
+</html>
